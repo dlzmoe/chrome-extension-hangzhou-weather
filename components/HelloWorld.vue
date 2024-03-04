@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import './main.css'
+import "./main.css";
 import axios from "axios";
 export default {
   data() {
@@ -37,32 +37,55 @@ export default {
     };
   },
   methods: {
-    async getList() {
-      const data = JSON.parse(localStorage.getItem("data"));
+    saveTimestamp() {
+      var timestamp = Date.now();
+      localStorage.setItem("timestamp", timestamp);
+    },
+    checkTimestamp() {
+      var storedTimestamp = localStorage.getItem("timestamp");
+      if (storedTimestamp) {
+        var currentTime = Date.now();
+        var elapsedTime = currentTime - storedTimestamp;
+        var oneHour = 60 * 60 * 1000; // 1小时的毫秒数
 
-      if (data) {
-        this.data = data;
+        if (elapsedTime >= oneHour) {
+          // 执行事件
+          console.log("超过1小时");
+          this.getList();
+        } else {
+          this.data = localStorage.getItem("data");
+
+          this.data = JSON.parse(this.data);
+          console.log(this.data);
+        }
       } else {
-        axios
-          .get(
-            "https://devapi.qweather.com/v7/weather/7d?location=" +
-              this.location +
-              "&key=" +
-              this.key
-          )
-          .then((response) => {
-            localStorage.setItem("data", JSON.stringify(response.data.daily));
-            this.data = response.data.daily;
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        // 如果localStorage中没有时间戳，则保存当前时间戳
+        this.saveTimestamp();
+        this.getList();
       }
     },
+    async getList() {
+      axios
+        .get(
+          "https://devapi.qweather.com/v7/weather/7d?location=" +
+            this.location +
+            "&key=" +
+            this.key
+        )
+        .then((response) => {
+          localStorage.setItem("data", JSON.stringify(response.data.daily));
+          this.data = response.data.daily;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
+  },
+  created() {
+    this.checkTimestamp();
   },
   mounted() {
-    this.getList();
+    // this.getList();
   },
 };
 </script>
-
